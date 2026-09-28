@@ -15,11 +15,6 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ProductService {
 
-//    private final ConcurrentHashMap<Long, Product> productMap =
-//            new ConcurrentHashMap<>();
-//
-//    private final AtomicLong idCounter = new AtomicLong(0);
-
     private final ProductRepository productRepository;
 
     @PostConstruct
@@ -33,14 +28,10 @@ public class ProductService {
         return productRepository.findAll()
                 .stream().map(this::toProduct)
                 .toList();
-
-//        return productMap.values().stream().toList();
     }
 
     public Optional<Product> getProductById(Long id) {
         return productRepository.findById(id).map(this::toProduct);
-
-//        return Optional.ofNullable(productMap.get(id));
     }
 
     public Product createProductAndSave(String name, BigDecimal price) {
@@ -48,9 +39,6 @@ public class ProductService {
         ProductEntity product = ProductEntity.builder().name(name).price(price).build();
         ProductEntity newProduct = productRepository.save(product);
         return toProduct(newProduct);
-
-//        Product newProduct = new Product(idCounter.incrementAndGet(), name, price);
-//        productMap.put(newProduct.id(), newProduct);
     }
 
     private Product toProduct(ProductEntity entity) {
