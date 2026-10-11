@@ -45,7 +45,7 @@ public class ProductCatalogController {
     }
 
     @PutMapping("/prices")
-    public ResponseEntity<Void> updatePrice(@RequestBody List<PriceUpdateRequest> request) {
+    public ResponseEntity<Void> updatePrice(@Valid @RequestBody List<PriceUpdateRequest> request) {
         productService.updatePricesFromController(request);
         return ResponseEntity.noContent().build();
     }

@@ -6,12 +6,11 @@ import com.practice.product_service.exception.ProductNotFoundException;
 import com.practice.product_service.model.Product;
 import com.practice.product_service.web.dto.PriceUpdateRequest;
 import jakarta.annotation.PostConstruct;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -39,7 +38,6 @@ public class ProductService {
     }
 
     public Product createProductAndSave(String name, BigDecimal price) {
-
         ProductEntity product = ProductEntity.builder().name(name).price(price).build();
         ProductEntity newProduct = productRepository.save(product);
         return toProduct(newProduct);
@@ -50,8 +48,8 @@ public class ProductService {
         for (PriceUpdateRequest update : requestList) {
             ProductEntity entity = productRepository.findById(update.id())
                     .orElseThrow(() -> new ProductNotFoundException(update.id()));
-            entity.setPrice(update.newPrice());
-//            productRepository.save(entity);
+            entity.setPrice(update.price());
+            productRepository.save(entity);
         }
     }
 
@@ -61,10 +59,6 @@ public class ProductService {
 
     private Product toProduct(ProductEntity entity) {
         return new Product(entity.getId(), entity.getName(), entity.getPrice());
-    }
-
-    private ProductEntity toProductEntity(Product product) {
-        return ProductEntity.builder().id(product.id()).price(product.price()).build();
     }
 
 }
