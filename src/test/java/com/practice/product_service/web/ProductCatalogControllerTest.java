@@ -1,0 +1,81 @@
+package com.practice.product_service.web;
+
+import com.practice.product_service.model.Product;
+import com.practice.product_service.service.ProductService;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+
+import java.math.BigDecimal;
+import java.util.Optional;
+
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@WebMvcTest(ProductCatalogController.class)
+class ProductCatalogControllerTest {
+
+    @Autowired
+    MockMvc mockMvc;
+
+    @MockitoBean
+    ProductService productService;
+
+    @Test
+    void getProductById_returnsProduct() throws Exception {
+        when(productService.getProductById(1L))
+                .thenReturn(Optional.of(new Product(1L, "mug", new BigDecimal(500))));
+
+        mockMvc.perform(get("/products/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.name").value("mug"))
+                .andExpect(jsonPath("$.price").value(new BigDecimal(500)));
+    }
+
+    @Test
+    void getProductById_returns404WhenMissing() throws Exception {
+        when(productService.getProductById(99L)).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/products/99"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.detail").value("Product 99 not found"));
+
+    }
+
+    @Test
+    void createProduct_returns400WhenInvalid() throws Exception {
+        mockMvc.perform(post("/products").contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name": "","price": -10}"""))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.detail").value("Validation failed"))
+                .andExpect(jsonPath("$.errors.price").exists())
+                .andExpect(jsonPath("$.errors.name").exists());
+
+        verifyNoInteractions(productService);
+
+    }
+
+    @Test
+    void createProduct_returns201WithLocation() throws Exception {
+        when(productService.createProductAndSave("spoon", new BigDecimal(20)))
+                .thenReturn(new Product(4L, "spoon", new BigDecimal(20)));
+
+        mockMvc.perform(post("/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name": "spoon","price": 20}"""))
+                .andExpect(status().isCreated())
+                .andExpect(header().string("Location", "/products/4"));
+    }
+
+}
