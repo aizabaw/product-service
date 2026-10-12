@@ -5,6 +5,7 @@ import com.practice.product_service.model.Product;
 import com.practice.product_service.service.ProductService;
 import com.practice.product_service.web.dto.CreateProductRequest;
 import com.practice.product_service.web.dto.PriceUpdateRequest;
+import com.practice.product_service.exception.PriceUpdateException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -45,8 +46,8 @@ public class ProductCatalogController {
     }
 
     @PutMapping("/prices")
-    public ResponseEntity<Void> updatePrice(@Valid @RequestBody List<PriceUpdateRequest> request) {
-        productService.updatePricesFromController(request);
+    public ResponseEntity<Void> updatePrice(@Valid @RequestBody List<PriceUpdateRequest> request) throws PriceUpdateException {
+        productService.updatePrices(request);
         return ResponseEntity.noContent().build();
     }
 

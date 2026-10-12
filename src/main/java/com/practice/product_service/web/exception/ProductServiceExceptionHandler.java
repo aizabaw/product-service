@@ -1,5 +1,6 @@
 package com.practice.product_service.web.exception;
 
+import com.practice.product_service.exception.PriceUpdateException;
 import com.practice.product_service.exception.ProductNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -32,5 +33,10 @@ public class ProductServiceExceptionHandler {
                 "Validation failed");
         problem.setProperty("errors", errorMap);
         return problem;
+    }
+
+    @ExceptionHandler(PriceUpdateException.class)
+    public ProblemDetail handlePriceUpdateException(PriceUpdateException ex) {
+       return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 }

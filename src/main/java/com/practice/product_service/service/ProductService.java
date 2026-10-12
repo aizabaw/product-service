@@ -2,9 +2,9 @@ package com.practice.product_service.service;
 
 import com.practice.product_service.data.entity.ProductEntity;
 import com.practice.product_service.data.repository.ProductRepository;
-import com.practice.product_service.exception.ProductNotFoundException;
 import com.practice.product_service.model.Product;
 import com.practice.product_service.web.dto.PriceUpdateRequest;
+import com.practice.product_service.exception.PriceUpdateException;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -43,19 +43,19 @@ public class ProductService {
         return toProduct(newProduct);
     }
 
-    @Transactional
-    public void updatePrices(List<PriceUpdateRequest> requestList) {
+    @Transactional(rollbackFor = Exception.class)
+    public void updatePrices(List<PriceUpdateRequest> requestList) throws PriceUpdateException {
         for (PriceUpdateRequest update : requestList) {
             ProductEntity entity = productRepository.findById(update.id())
-                    .orElseThrow(() -> new ProductNotFoundException(update.id()));
+                    .orElseThrow(() -> new PriceUpdateException(update.id()));
             entity.setPrice(update.price());
             productRepository.save(entity);
         }
     }
 
-    public void updatePricesFromController(List<PriceUpdateRequest> updates) {
-        updatePrices(updates);   // calling our OWN method
-    }
+//    public void updatePricesFromController(List<PriceUpdateRequest> updates) {
+//        updatePrices(updates);   // calling our OWN method
+//    }
 
     private Product toProduct(ProductEntity entity) {
         return new Product(entity.getId(), entity.getName(), entity.getPrice());
