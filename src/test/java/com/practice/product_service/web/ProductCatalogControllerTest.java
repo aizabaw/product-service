@@ -1,11 +1,14 @@
 package com.practice.product_service.web;
 
+import com.practice.product_service.config.SecurityConfig;
 import com.practice.product_service.model.Product;
 import com.practice.product_service.service.ProductService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -21,6 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ProductCatalogController.class)
+@Import(SecurityConfig.class)
 class ProductCatalogControllerTest {
 
     @Autowired
@@ -30,6 +34,7 @@ class ProductCatalogControllerTest {
     ProductService productService;
 
     @Test
+    @WithMockUser(roles = "USER")
     void getProductById_returnsProduct() throws Exception {
         when(productService.getProductById(1L))
                 .thenReturn(Optional.of(new Product(1L, "mug", new BigDecimal(500))));
@@ -42,6 +47,7 @@ class ProductCatalogControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "USER")
     void getProductById_returns404WhenMissing() throws Exception {
         when(productService.getProductById(99L)).thenReturn(Optional.empty());
 
@@ -52,6 +58,7 @@ class ProductCatalogControllerTest {
     }
 
     @Test
+    @WithMockUser("ADMIN")
     void createProduct_returns400WhenInvalid() throws Exception {
         mockMvc.perform(post("/products").contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -66,6 +73,7 @@ class ProductCatalogControllerTest {
     }
 
     @Test
+    @WithMockUser("ADMIN")
     void createProduct_returns201WithLocation() throws Exception {
         when(productService.createProductAndSave("spoon", new BigDecimal(20)))
                 .thenReturn(new Product(4L, "spoon", new BigDecimal(20)));
@@ -77,5 +85,36 @@ class ProductCatalogControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(header().string("Location", "/products/4"));
     }
+
+    @Test
+    void getProductById_returns401WhenNotAuthenticated() throws Exception {
+        mockMvc.perform(get("/products/1"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.detail").value("Authentication required"));
+    }
+
+    @Test
+    void createProduct_returns401WhenNotAuthenticated() throws Exception {
+        mockMvc.perform(post("/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name": "spoon","price": 20}"""))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.detail").value("Authentication required"));
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    void createProduct_returns403WhenNotAdmin() throws Exception {
+        mockMvc.perform(post("/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name": "spoon","price": 20}"""))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.detail").value("Access denied"));
+
+        verifyNoInteractions(productService);
+    }
+
 
 }
