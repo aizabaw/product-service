@@ -6,3 +6,10 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: http://localhost:8180/realms/product-realm
+          audiences: product-service-2
+  jpa:
+    open-in-view: false
+
+logging:
+  level:
+    com.practice.product_service.config: debug

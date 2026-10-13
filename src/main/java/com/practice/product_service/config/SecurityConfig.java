@@ -3,6 +3,7 @@ package com.practice.product_service.config;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -10,9 +11,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
@@ -21,20 +19,21 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 
 @Configuration
 @RequiredArgsConstructor
+@Slf4j
 public class SecurityConfig {
 
     private final ObjectMapper mapper;
 
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain securityFilterChain(HttpSecurity http) {
 
         AuthenticationEntryPoint unauthorized = (request, response, exception) -> {
+            log.debug("Authentication failed for {}: {}", request.getRequestURI(),
+                    exception.getMessage());
+
             response.addHeader("WWW-Authenticate", "Bearer");
             writeResponse(request, response, HttpStatus.UNAUTHORIZED, "Authentication required");
         };
@@ -63,18 +62,8 @@ public class SecurityConfig {
 
     private JwtAuthenticationConverter keycloakRoleConverter() {
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
-        converter.setJwtGrantedAuthoritiesConverter(this::extractRealmRoles);
+        converter.setJwtGrantedAuthoritiesConverter(new KeycloakRealmRoleConverter());
         return converter;
-    }
-
-    private Collection<GrantedAuthority> extractRealmRoles(Jwt jwt) {
-        Map<String, Object> realmAccess = jwt.getClaimAsMap("realm_access");
-        if (realmAccess == null || !(realmAccess.get("roles") instanceof Collection<?> roles)) {
-            return List.of();                                  // no roles claim -> no authorities
-        }
-        return roles.stream()
-                .map(role -> (GrantedAuthority) new SimpleGrantedAuthority("ROLE_" + role))
-                .toList();
     }
 
     private void writeResponse(HttpServletRequest request, HttpServletResponse response,
