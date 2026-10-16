@@ -39,7 +39,7 @@ class KeycloakRealmRoleConverterTest {
                 .header("alg", "none")
                 .claim(claimName, roles)
                 .build());
-        assertThat(authorities.isEmpty());
+        assertThat(authorities).isEmpty();
 
     }
 
