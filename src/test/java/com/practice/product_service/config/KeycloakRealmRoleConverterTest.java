@@ -32,12 +32,12 @@ class KeycloakRealmRoleConverterTest {
 
     @ParameterizedTest
     @MethodSource("testInvalidClaims")
-    void convert_returnsNoAuthoritiesForMalformedClaims(String claimName, Object roles) {
+    void convert_returnsNoAuthoritiesForMalformedClaims(String claimName, Object claimValue) {
 
         Collection<GrantedAuthority> authorities = new KeycloakRealmRoleConverter().convert(Jwt
                 .withTokenValue("token")
                 .header("alg", "none")
-                .claim(claimName, roles)
+                .claim(claimName, claimValue)
                 .build());
         assertThat(authorities).isEmpty();
 
@@ -48,7 +48,7 @@ class KeycloakRealmRoleConverterTest {
                 Arguments.of("other_claims", Map.of()),
                 Arguments.of("realm_access", Map.of()),
                 Arguments.of("realm_access", Map.of("roles", List.of())),
-                Arguments.of("realmaccess", Map.of("roles", "ADMIN"))
+                Arguments.of("realm_access", Map.of("roles", "ADMIN"))
         );
     }
 
