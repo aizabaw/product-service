@@ -169,6 +169,7 @@ class ProductCatalogControllerTest {
                 .andExpect(jsonPath("$.detail").value("Authentication required"));
 
         verify(jwtDecoder).decode("admin-token");
+        verifyNoInteractions(productService);
 
     }
 
