@@ -107,6 +107,8 @@ class ProductCatalogControllerTest {
                                 {"name": "spoon","price": 20}"""))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.detail").value("Authentication required"));
+
+        verifyNoInteractions(productService);
     }
 
     @Test
@@ -116,6 +118,22 @@ class ProductCatalogControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"name": "spoon","price": 20}"""))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.detail").value("Access denied"));
+
+        verifyNoInteractions(productService);
+    }
+
+    @Test
+    void createProduct_returns403WhenNotAdminJwt() throws Exception {
+
+        when(jwtDecoder.decode("user-token")).thenReturn(jwtWithRoles("USER"));
+
+        mockMvc.perform(post("/products")
+                        .header("Authorization", "Bearer user-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {"name": "chair", "price": 500}"""))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.detail").value("Access denied"));
 
