@@ -20,8 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -157,17 +156,19 @@ class ProductCatalogControllerTest {
     }
 
     @Test
-    void createProduct_returns403WhenBadJwt() throws Exception {
+    void createProduct_returns401WhenBadJwt() throws Exception {
 
         when(jwtDecoder.decode("admin-token")).thenThrow(new BadJwtException("Error encountered"));
 
         mockMvc.perform(post("/products")
-                .header("Authorization", "admin-token")
+                .header("Authorization", "Bearer admin-token")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                         {"name": "fan", "price": 80}"""))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.detail").value("Authentication required"));
+
+        verify(jwtDecoder).decode("admin-token");
 
     }
 
