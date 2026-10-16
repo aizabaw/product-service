@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: product-service
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8180/realms/product-realm
+          audiences: product-service
+  jpa:
+    open-in-view: false
+
+logging:
+  level:
+    com.practice.product_service.config: debug
