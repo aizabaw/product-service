@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.oauth2.jwt.BadJwtException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -152,6 +153,21 @@ class ProductCatalogControllerTest {
                 .andExpect(jsonPath("$.errors.name").exists());
 
         verifyNoInteractions(productService);
+
+    }
+
+    @Test
+    void createProduct_returns403WhenBadJwt() throws Exception {
+
+        when(jwtDecoder.decode("admin-token")).thenThrow(new BadJwtException("Error encountered"));
+
+        mockMvc.perform(post("/products")
+                .header("Authorization", "admin-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {"name": "fan", "price": 80}"""))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.detail").value("Authentication required"));
 
     }
 
