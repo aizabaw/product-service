@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -32,6 +33,9 @@ class ProductCatalogControllerTest {
 
     @MockitoBean
     ProductService productService;
+
+    @MockitoBean
+    JwtDecoder jwtDecoder;
 
     @Test
     @WithMockUser(roles = "USER")
@@ -58,7 +62,7 @@ class ProductCatalogControllerTest {
     }
 
     @Test
-    @WithMockUser("ADMIN")
+    @WithMockUser(roles = "ADMIN")
     void createProduct_returns400WhenInvalid() throws Exception {
         mockMvc.perform(post("/products").contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -73,7 +77,7 @@ class ProductCatalogControllerTest {
     }
 
     @Test
-    @WithMockUser("ADMIN")
+    @WithMockUser(roles = "ADMIN")
     void createProduct_returns201WithLocation() throws Exception {
         when(productService.createProductAndSave("spoon", new BigDecimal(20)))
                 .thenReturn(new Product(4L, "spoon", new BigDecimal(20)));
