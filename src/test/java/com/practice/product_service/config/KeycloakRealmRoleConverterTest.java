@@ -47,6 +47,7 @@ class KeycloakRealmRoleConverterTest {
         return Stream.of(
                 Arguments.of("other_claims", Map.of()),
                 Arguments.of("realm_access", Map.of()),
+                Arguments.of("realm_access", "oops"),
                 Arguments.of("realm_access", Map.of("roles", List.of())),
                 Arguments.of("realm_access", Map.of("roles", "ADMIN"))
         );
